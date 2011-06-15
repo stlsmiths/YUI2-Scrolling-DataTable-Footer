@@ -1,0 +1,151 @@
+YUI2 Scrolling DataTable Footer extension
+
+An extension to Scrolling DataTable under YUI 2 is presented that creates a footer at the bottom 
+of a DataTable.  The extension can be used with either a non-scrolling DT or with the Scrolling DT.
+The footer for a SDT can be either (a) fixed, wherein it remains visible at the bottom of the SDT as 
+the rows are scrolled with vertical scrollbars or (b) floating, wherein the footer scrolls with the SDT.
+
+A working example is available here :  http://www.blunderalong.com/pub/dt_scroll_foot.html
+
+A description of this extension is posted on YUILibrary as : http://yuilibrary.com/forum/viewtopic.php?f=90&t=7773
+
+Additional examples will be posted here under "Examples" as time / interest requires!
+
+Features
+========
+The main features of this extension are;
+ 1. Footer is highly configurable via DT's configuration object, no Column parameters required.
+ 2. The heading feature allows a TH to be defined that span several columns ... typical for summary tables
+ 3. Column keys can be defined flexibly including classes and formatters used in basis data.
+ 4. Pre-defined calculations include {SUM},{AVG},{MEAN},{MAX},{MIN},{ROW_COUNT}
+ 5. A user-defined function can be provided to accomplish the calculations for a TD in footer also
+ 6. Footer is rendered by default in same style as "Header", provides consistency
+ 7. The footer totals are refreshed automatically after each SDT "renderEvent" which occurs after 
+     cell-editing, pagination, record insertion or deletion.
+ 8. The footer cells re-size according to "Heading" column resizing.
+
+This extension has a relatively small footprint, approx 31.5Kb in size, of course after loading DT and SDT !
+
+Background
+==========
+YUI contributor Matt Parker developed a "Table footer statistics for YUI 2 DataTable" extension that was 
+documented in his YUIBlog article of January 13, 2011 (see http://www.yuiblog.com/blog/2011/01/13/table-footer-statistics-for-yui-2-datatable/).  
+Parker's extension supports a number of mathematical functions but was limited to only working on DataTable.  I also found 
+in my use of his extension that most of the time I simply needed a column "sum", not standard deviations, etc...
+
+At issue for Scrolling DT is the manner in which the Table is constructed within the DOM.  Specifically, for an SDT the 
+THEAD elements are added to a separate DIV / TABLE above and outside of the TBODY DIV.  This is done so that the THEAD element 
+will remain stationary as the TBODY and it's rows scroll.  
+
+In order to add a TFOOT to an SDT, the same approach is used; an additional DIV is added to the Table "container element" that 
+adds another DIV / TABLE combination after the TBODY containing the data rows.  This enables both the THEAD and TFOOT to remain 
+stationary "fixed" relative to the scrolling rows.  
+
+After the SDT is rendered, the "validateColumnWidths" function is called to align the separate TABLES for THEAD / TBODY / TFOOT to 
+make them all consistent sizes.  I've found this function to be a time-consuming function (and seems to fail sometimes in IE if 
+the column widths are not set in ColumnSet).
+
+If the footer is to be "floating", it is a much simpler task, and a TFOOT is simply appended to the TBODY within the same 
+TABLE element.  Column resizing is not an issue in this instance.
+
+
+Implementation
+==============
+The scrolling datatable footer extension is defined as a YUI extension of ScrollingDataTable (SDT). 
+
+The instantiation is called via "new YAHOO.widget.DataTableSF", where this extension is a subclass 
+of ScrollingDataTable, which is a subclass of DataTable (DT).  The extension library file sdatatable_foot.js 
+must be included to add the functionality.
+
+A datatable without any footer could be created using DataTableSF without a configuration object, but there 
+may be a performance penalty because it is loading SDT and all its method and adding new ones.  
+
+This extension has been tested successfully within FireFox 3.5+, Safari, Chrome and IE7/9.  
+(IE suffers from performance problems when Column widths are not explicitly set 
+ [see http://developer.yahoo.com/yui/datatable/#knownissues] and this extension exhibits the same issues.)
+
+
+
+Configuration
+=============
+The footer is configured fully by an object named "tfooter" inside the DataTable configuration object when
+the table is instantiated.
+
+The tfooter configuration object includes the following members;
+
+   fixed	{Boolean}	Flag indicating whether a "fixed" or "floating" footer is desired.  (Default:true)
+   
+   heading	{Object}	Object containing individual members defining the TH element (only one TH allowed)
+				The members of this object are;
+
+				colspan:   {Integer}	Number of leftmost columns to "colspan" together to make TH
+							(includes hidden columns)
+				label:	   {String}	Label text to display in the TH innerHTML
+							(allows for {ROW_COUNT} substitution to be added É)
+				className: {String}	Additional CSS class name to add to TH (typically for alignment)
+
+   col_keys	{Array of Objects}
+				Provide a separate object consisting of the ColumnSet "key" to include for calculations
+				in the footer.  Each row in this array is used to populate the TD for this key.
+				The members of this object are;
+				
+				key:	   {String}	Column key name from DT ColumnSet
+				calc:	   {String}	Calculation method to use for this column
+							any of; {SUM},{AVG},{MEAN},{MAX},{MIN},{ROW_COUNT}
+							( NOTE: to add more functions revise method _recalcFooter ) 	
+				func:	   {Function}	A function to use to populate this TD (no arguments)
+				className: {String}	Additional CSS class to add to the TD (typically alignment)
+
+				formatter: {String|Function} A formatter to use for this TD calculated result.  
+							Can be either a DT standard name (i.e. currency, number) or 
+							a custom formatter, as long as it does not operate on oRecord 
+							which is unavailable in the footer! 
+				exclude:   {Boolean}	Flag to indicate whether to exclude a Column from footer (experimental)
+	
+
+Example Instantiation
+=====================
+
+// say myCols has 15 columns, including last two columns for edit and delete links we
+//   want to exclude from footer.
+
+var myDT = new YAHOO.widget.DataTableSF( 'divTableContainer', myCols, myDS, { 	
+
+     // normal SDT configuration	
+
+	MSG_EMPTY:	"No positions found!",
+	MSG_LOADING:	"Loading positions ...",
+	scrollable:	true,
+	height: 	"23em",
+	width:		"88em",
+	dateOptions: 	 { format: '%m/%d/%y' },
+	numberOptions: 	 { decimalPlaces: 2, thousandsSeparator: "," },
+
+     // footer configuration object ...
+   													
+	tfooter: {	    fixed:	true,
+			    heading:	{ colspan:9, label:"TOTALS ( {ROW_COUNT} positions ) :", className:'align-center' }, 
+			    col_keys:	[
+					   { key:'s_cbasis', 	calc:'{SUM}' },	
+					   { key:'s_mvalue', 	calc:'{SUM}' }, 
+					   { key:'gl', 		func: pos_gl_calc, 	formatter:"number" },
+					   { key:'glperc', 	func: pos_glperc_calc, 	formatter:"number" },
+					   { key:'delete',		exclude:true },
+					   { key:'edit',		exclude:true }			
+					]
+			}  // end of tfooter  
+   });  	
+
+
+Files in this Git
+=================
+1.  sdatatable_foot.js	:  Includes the DataTableSF widget extension
+2.  dt_scroll_foot.html :  A sample that demonstrates DataTableSF widget (requires CSs and syntax directories)
+3.  ba_example.css      :  A CSS file for item no. 2 only! (NOT REQUIRED FOR DataTableSF)
+4.  syntax director     :  A syntax highlighting utility from Gorbachev for item 2 only! (NOT REQUIRED for DataTableSF)
+
+
+Comments / Feedback
+===================
+Please feel free to contact the developer on the YUILibrary forum under username: stlsmiths or post 
+comments here.

@@ -1,0 +1,58 @@
+	body {
+		margin-left: 3em;
+		padding:0;
+		text-align:left;
+	}
+
+	.divHide, div.divHide, span.divHide, li.divHide {
+		visibility:hidden;
+		display:none;	
+	}
+
+	.yui-skin-sam .yui-dt .align-right, th.align-right, td.align-right, div.align-right, span.align-right {
+	    text-align:right;
+		}
+	
+	.yui-skin-sam .yui-dt .align-center, th.align-center, td.align-center, div.align-center, span.align-center {
+		text-align:center;
+	}
+	
+	.yui-skin-sam .yui-dt .align-left, th.align-left, td.align-left, div.align-left, span.align-left {
+		text-align:left;
+	}
+
+	.yui-skin-sam	div.example {
+        border:2px solid #006;
+		background:#eee;
+        padding:8px;
+ 	/*	margin:50px 20px 30px 15px;   */
+		-moz-border-radius:6px;  
+		border-radius: 6px;
+
+    }
+
+	.yui-skin-sam .yui-dt-scrollable .yui-dt-ft {
+		border-left:1px solid #7F7F7F;
+		border-bottom:1px solid #7F7F7F;
+		border-right:1px solid #7F7F7F;
+		background-color:#FFF;		
+	} 
+
+	.yui-skin-sam .yui-dt-scrollable thead.childTable {
+		left:auto;
+		position:relative;
+	}
+
+		table.notable tr {
+		border-collapse:collapse;
+		border:none;
+		padding: 2 5 2 5;
+	}
+
+/*	padding: top right bottom left       */
+
+	table.notable td, th {
+		border-collapse:collapse;
+		border:none;
+		padding: 2 5 2 5;
+	}
